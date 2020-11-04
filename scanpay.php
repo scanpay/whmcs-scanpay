@@ -66,6 +66,17 @@ function scanpay_config($params)
             'Size' => '64',
             'Value' => 'Pay Invoice',
         ],
+        'language' => [
+            'FriendlyName' => 'Payment Window Language',
+            'Type' => 'dropdown',
+            'Options' => [
+                '' => 'Automatic (browser language',
+                'en' => 'English',
+                'da' => 'Danish',
+                'se' => 'Swedish',
+                'no' => 'Norwegian',
+            ],
+        ],
         'autocapture' => [
             'FriendlyName' => 'Auto-capture',
             'Type' => 'dropdown',
@@ -79,12 +90,13 @@ function scanpay_link($p)
     $cl = $p['clientdetails'];
     $data = [
         'orderid'     => $p['invoiceid'],
-        'language'    => $p['langpaynow'],
+        'language'    => $p['language'],
         'autocapture' => filter_var($p['autocapture'], FILTER_VALIDATE_BOOLEAN),
         'successurl'  => $p['returnurl'],
+        'lifetime'    => '',
         'items'       => [
             [
-                'name'     => $p["description"],
+                'name'     => $p['description'],
                 'quantity' => 1,
                 'total'    => $p['amount'] . ' ' . $p['currency'],
             ],
