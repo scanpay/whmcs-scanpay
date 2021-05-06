@@ -41,7 +41,7 @@ function respond($err)
     if (is_null($err)) {
         echo '{"success":true}';
     } else {
-        logModuleCall('scanpay', 'ping', $_POST, '', $err, []);
+        logActivity('Scanpay ping err:' . $err);
         echo json_encode(['error' => $err]);
     }
     exit();

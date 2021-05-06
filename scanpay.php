@@ -19,6 +19,10 @@ function scanpay_MetaData()
 
 function scanpay_config($params)
 {
+    /* create paymentdatadb if not created */
+    require_once(__DIR__ . '/scanpay/paymentdatadb.php');
+    $paymentdatadb = new \WHMCS\Module\Gateway\Scanpay\PaymentDataDB();
+
     /* extract last ping time */
     require_once(__DIR__ . '/scanpay/shopseqdb.php');
     $shopSeqDB = new \WHMCS\Module\Gateway\Scanpay\ShopSeqDB();
@@ -46,7 +50,7 @@ function scanpay_config($params)
         'version' => [
             'FriendlyName' => 'Module version',
             'Type' => null,
-            'Description' => '0.0.1',
+            'Description' => '0.1.0',
             'Size' => '20',
             'disabled' => true,
         ],
@@ -93,7 +97,6 @@ function scanpay_link($p)
         'language'    => $p['language'],
         'autocapture' => filter_var($p['autocapture'], FILTER_VALIDATE_BOOLEAN),
         'successurl'  => $p['returnurl'],
-        'lifetime'    => '',
         'items'       => [
             [
                 'name'     => $p['description'],
@@ -116,12 +119,26 @@ function scanpay_link($p)
         ]),
         'shipping'    => [],
     ];
-    $options = [
-        'debug' => false,
-    ];
-    require_once(__DIR__ . '/scanpay/libscanpay.php');
-    $scanpay = new Scanpay\Scanpay($p['apikey']);
-    $url = $scanpay->newURL($data, $options);
-    $url = str_replace('"', '', $url);
-    return '<a href="' . $url . '">' . $p['linktext'] . '</a>';
+    $encdata = json_encode($data);
+    if (!$encdata) {
+        throw new \Exception('Failed to JSON-encode data');
+    }
+
+    require_once(__DIR__ . '/scanpay/paymentdatadb.php');
+    $paymentdatadb = new \WHMCS\Module\Gateway\Scanpay\PaymentDataDB();
+    $pd = $paymentdatadb->load($p['invoiceid']);
+    if ($pd === FALSE) {
+        throw new \Exception('Failed to load payment data');
+    } else if ($pd === NULL) {
+        $key = bin2hex(random_bytes(32));
+        if (!$paymentdatadb->insert($p['invoiceid'], $key, $p['apikey'], $encdata)) {
+            throw new \Exception('Failed to save payment data');
+        }
+        $pd = [ 'querykey' => $key ];
+    }
+
+    $url = $params['systemurl'] . 'modules/gateways/scanpay/pay.php';
+    $url .= '?invoiceid=' . $p['invoiceid'];
+    $url .= '&key=' . $pd['querykey'];
+    return '<a href="' . $url . '">'. $p['linktext'] . '</a>';
 }

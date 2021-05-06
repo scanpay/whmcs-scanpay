@@ -36,7 +36,7 @@ class ShopSeqDB
     public function insert($shopid)
     {
         if (!is_int($shopid) || $shopid <= 0) {
-            logModuleCall('scanpay', 'ping', '', '', 'ShopId argument is not an unsigned int', []);
+            logActivity('Scanpay: ShopId argument is not an unsigned int');
             return false;
         }
         $stmt = $this->pdo->prepare("INSERT IGNORE INTO `$this->tablename`" .
@@ -48,12 +48,12 @@ class ShopSeqDB
     public function save($shopid, $seq)
     {
         if (!is_int($shopid) || $shopid <= 0) {
-            logModuleCall('scanpay', 'ping', '', '', 'ShopId argument is not an unsigned int', []);
+            logActivity('Scanpay: ShopId argument is not an unsigned int');
             return false;
         }
 
         if (!is_int($seq) || $seq < 0) {
-            logModuleCall('scanpay', 'ping', '', '', 'Seq argument is not an unsigned int', []);
+            logActivity('Scanpay: Seq argument is not an unsigned int');
             return false;
         }
 
@@ -65,7 +65,7 @@ class ShopSeqDB
         $stmt->bindValue(':shopid', $shopid, \PDO::PARAM_INT);
         $ret = $stmt->execute();
         if ($ret == false) {
-            logModuleCall('scanpay', 'ping', '', '', 'Failed saving seq to database', []);
+            logActivity('Scanpay: Failed saving seq to database');
             return false;
         }
         if ($ret === 0) {
@@ -80,7 +80,7 @@ class ShopSeqDB
         $stmt->bindValue(':shopid', $shopid, \PDO::PARAM_INT);
         $ret = $stmt->execute();
         if ($ret == false) {
-            logModuleCall('scanpay', 'ping', '', '', 'Failed loading seq from database', []);
+            logActivity('Scanpay: Failed loading seq from database');
             return false;
         }
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
